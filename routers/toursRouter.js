@@ -7,26 +7,27 @@ var router=express.Router();
 router.param('id',controller.checkId)
 
 
-router.use(controller.checkBody)
 
 
 //get api
-router.get('/api/v1/tours',controller.getAllTours )
+router.route('/')
+.get(controller.getAllTours )
 
 //post api
-router.post('/api/v1/tours',controller.checkBody, controller.postNewTours)
+.post(controller.checkBody, controller.postNewTours)
 
 //get api by id
-router.get('/api/v1/tours/:id', controller.getTourById)
+router.route('/:id')
+.get( controller.getTourById)
 
 
 //update patch api by id
 
-router.patch('/api/v1/tours/:id',controller.updateById )
+.patch(controller.updateById )
 
 //delete api by id
 
-router.delete('/api/v1/tours/:id',controller.deleteById)
+.delete(controller.deleteById)
 
 
 module.exports=router;
