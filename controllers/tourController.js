@@ -1,101 +1,93 @@
-var fs = require('fs');
-var tours = JSON.parse(fs.readFileSync('./sample-data/tours.json', 'utf-8'));
 
-exports.checkId=(req,res,next,val)=>{
-   if(req.params.id*1>tours.length)
-   {
-       return res.status(400).json({
-            Error: "id was not found"
-        })
-    }
-    next();
-
-}
-exports.checkBody=(req,res,next)=>{
-    
-    if(!req.body.name)
-    {
-       return res.status(400).json({
-            Error:"body doesn't have any data"
-        })
-    }
-    next()
-}
+var tours=require('../models/tourModel.js')
+var fs=require('fs')
+const Tour = JSON.parse(
+    fs.readFileSync(`./sample-data/tours.json`, 'utf-8')
+  );
 
 //get api
-exports. getAllTours= (req, res) => {
-    res.status(200).json({
-        result: "success",
-        data: {
-            tours
-        }
+exports. getAllTours= async(req, res) => {
+    try{
+        var result=await tours.find()
+        res.send(result)
+        
+   }
+   catch(err){
+    res.status(400).json({
+        status:'failed',
+        message: err
     })
+   }
 }
 
 //post api
-exports.postNewTours= (req, res) => {
-    var newId = tours[tours.length - 1].id + 1;
-    var newUser = Object.assign({ id: newId }, req.body)
-    tours.push(newUser)
-    fs.writeFile('./sample-data/tours.json', JSON.stringify(tours), 'utf-8', (err) => {
-        if (err) throw err;
-        res.json(newUser)
-    })
+exports.postNewTours= async (req, res) => {
+   
+    try{
+         var result=await tours.create(Tour)
+         res.send(result)
+    }
+    catch(err)
+    {
+        res.status(400).json({
+            status:'failed',
+            message: err.message
+        })
+    }
+   
 }
 
+
 //get api by id
-exports.getTourById= (req, res) => {
-    var _id = req.params.id
-     console.log(tours.length)
-    var found = tours.some(value => value.id === parseInt(_id))
-    if (found) {
-        var result = tours.filter(element => element.id === parseInt(_id))
-
-    }
-    
-
-    // var result=tours.find(element=>element.id===parseInt(_id))
-    res.send(result)
+exports.getTourById= async(req, res) => {
+   
+     try{
+        var result=await tours.findById(req.params.id)
+       res.send(result)
+   }
+   catch(err)
+   {
+       res.status(400).json({
+           status:'failed',
+           message: err
+       })
+   }
 }
 
 
 //update patch api by id
 
-exports.updateById= (req, res) => {
-    var _id = req.params.id
-    var found = tours.some(value => value.id === parseInt(_id))
-    if (found) {
-        tours.forEach(element => {
-            if (element.id === parseInt(_id)) {
-                element.duration = req.body.duration;
-                res.json(element.duration)
-            }
-            
-        });
-      
-    }
+exports.updateById= async(req, res) => {
+    try{
+        var result=await tours.findByIdAndUpdate(req.params.id,req.body,{
+            new:true
+            })
+        
+       res.send(result)
+   }
+   catch(err)
+   {
+       res.status(400).json({
+           status:'failed',
+           message: err
+       })
+   }
     
 }
 
-exports.deleteById=(req,res)=>{
-    var _id = req.params.id
-    var found = tours.some(value => value.id === parseInt(_id))
-    if (found) {
-        var result = tours.filter(element => element.id !== parseInt(_id))
-       
-    }
-    
-     
-    // var result=tours.find(element=>element.id===parseInt(_id))
- 
-   else
-   {
-    res.status(400).json({
-        Error:"error occured"
-    })
+exports.deleteById=async (req,res)=>{
+    try{
+        var result=await tours.findByIdAndRemove(req.params.id)
+       res.send("successfully deleted")
    }
-
-   res.send(result)
+   catch(err)
+   {
+       res.status(400).json({
+           status:'failed',
+           message: err
+       })
+   }
+    
 }
 
 
