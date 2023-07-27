@@ -4,6 +4,7 @@ var controller=require('../controllers/tourController.js')
 
 var router=express.Router();
 
+router.route('/top-5').get(controller.aliasing,controller.getAllTours)
 //get api
 router.route('/')
 .get(controller.getAllTours )
