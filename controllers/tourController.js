@@ -5,6 +5,8 @@ const Tour = JSON.parse(
     fs.readFileSync(`./sample-data/tours.json`, 'utf-8')
 );
 
+var APIFeatures=require('../utils/apiFeatures.js');
+
 //middleware
 exports.aliasing=(req,res,next)=>{
     req.query.limit='5';
@@ -15,54 +17,113 @@ exports.aliasing=(req,res,next)=>{
 
 
 
+exports.aggregate=async(req,res,next)=>{
+    try{
+    var value=await tours.aggregate([
+        
+           {
+            $match: { ratingsAverage:{$gt:4} },
+           },
+           {
+            $group:
+            {
+                _id:null,
+                numOfTours:{$sum:1},
+                numRatings:{$sum:'$ratingsQuantity'},
+                avgPrice:{$avg:'$price'},
+                maxPrice:{$max:'$price'},
+                minPrice:{$min:'$price'},
+               ratingAvg:{$avg:'$ratingsAverage'}
+            }
+           },
+           {
+            $sort:
+            {
+               avgPrice:1
+            }
+           }
+    ])
+    res.status(200).json({
+        count: value.length,
+        finalRes: value
+    })
+
+}
+catch (err) {
+    res.status(400).json({
+        status: 'failed',
+        message: err.message
+    })
+}
+}
+
+
+
+
+
+exports.aggregateAdvance=async(req,res,next)=>{
+    try{
+        var year=req.params.year*1
+    var value=await tours.aggregate([
+        {
+            $unwind:'$startDates'
+        },
+        {
+            $match:{
+                startDates:
+                {$gte:new Date(`${year}-01-01`),$lte:new Date(`${year}-12-31`)}
+                
+            }
+        },
+        {
+            $group:{
+               _id:{$month:'$startDates'},
+               numTour:{$sum:1},
+               tour:{$push:'$name'}
+
+            }
+        },
+        {
+            $sort:{numTour:-1}
+        },
+        {
+            $limit:12
+        }
+
+    ])
+    res.status(200).json({
+        count: value.length,
+        finalRes: value
+    })
+
+}
+catch (err) {
+    res.status(400).json({
+        status: 'failed',
+        message: err.message
+    })
+}
+}
+
+
+
+
+
+
+
 //get api
 exports.getAllTours = async (req, res) => {
 
     try {
         //query filtering 
         // console.log(req.query)
-        const queryData = { ...req.query }
-        const excludeField = ['page', 'sort', 'limit', 'fields']
-        excludeField.forEach(el => delete queryData[el])
+        var feature=new APIFeatures(tours.find(),req.query)
+    .filter()
+    .sort()
+    .fields()
+    .pagination();
 
-        //advanced query filtering
-        var queryStr = JSON.stringify(queryData)
-        queryStr = queryStr.replace(/\b(gt|gte|lt|lte)\b/g, match => `$${match}`)
-        var query = tours.find(JSON.parse(queryStr))
-
-        //sorting
-        if (req.query.sort) {
-            const sortBy = req.query.sort.split(',').join(' ');
-            query = query.sort(sortBy)
-
-        }
-
-        //limiting
-
-    if(req.query.fields)
-    {
-        var field=req.query.fields.split(',').join(' ')
-        query=query.select(field)
-    }
-
-
-    //pagination
-
-    var page=req.query.page*1||1;
-    // console.log(`the page is ${page}`)
-    var limit=req.query.limit*1||100
-    // console.log(`the limit is ${limit}`)
-    var skip=(page-1)*limit;
-    // console.log(`the skip is ${skip}`)
-    query=query.skip(skip).limit(limit)
-
-    if(req.query.page)
-    {
-        var totalCount=await tours.countDocuments()
-        if(skip>=totalCount) throw "this page doesn't exist"
-    }
-
-        var result = await query
+        var result = await feature.query
         res.status(200).json({
             count: result.length,
             finalRes: result
@@ -81,8 +142,12 @@ exports.getAllTours = async (req, res) => {
 exports.postNewTours = async (req, res) => {
 
     try {
-        var result = await tours.create(Tour)
-        res.send(result)
+        var result = await tours.create(req.body)
+        res.status(200).json({
+            count: result.length,
+            finalRes: result
+        })
+
     }
     catch (err) {
         res.status(400).json({
