@@ -1,5 +1,7 @@
 var express = require('express');
 var mongoose=require('mongoose');
+var AppError=require('./utils/AppError')
+var errorHandler=require('./controllers/errorController')
 var dotenv=require('dotenv');
 var morgan=require('morgan');
 var app = express();
@@ -27,6 +29,15 @@ mongoose.connect(url)
 app.use('/api/v1/tours',toursRouter)
 
 
+app.all('*',(req,res,next)=>{
+    // var err=new Error(`can't find the ${req.originalUrl} on this server`)
+    // err.status='fail'
+    // err.statusCode=404
+    next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+})
+
+app.use(errorHandler);
+
 app.listen(3000, () => {
     console.log("server running on 3000 port")
-});
+}); 

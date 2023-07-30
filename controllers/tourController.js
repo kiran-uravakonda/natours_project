@@ -1,6 +1,7 @@
 
 var tours = require('../models/tourModel.js')
 var fs = require('fs')
+var AppError=require('../utils/AppError.js')
 const Tour = JSON.parse(
     fs.readFileSync(`./sample-data/tours.json`, 'utf-8')
 );
@@ -160,16 +161,23 @@ exports.postNewTours = async (req, res) => {
 
 
 //get api by id
-exports.getTourById = async (req, res) => {
+exports.getTourById = async (req, res,next) => {
 
     try {
         var result = await tours.findById(req.params.id)
-        res.send(result)
+        if(!result){
+           return  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+        }
+
+        res.status(200).json({
+         finalRes: result
+        })
+
     }
     catch (err) {
         res.status(400).json({
             status: 'failed',
-            message: err
+            message: err.message
         })
     }
 }

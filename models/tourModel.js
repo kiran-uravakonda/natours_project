@@ -98,13 +98,13 @@ tourSchema.virtual('durationWeeks').get(function (){
 })
 
 // document middleware only for save() and create() functions
-tourSchema.pre('save',function(next)
-{
-     this.slug=slugify(this.name)
-     console.log(this.slug)
-     next()
+// tourSchema.pre('save',function(next)
+// {
+//      this.slug=slugify(this.name)
+//      console.log(this.slug)
+//      next()
     
-})
+// })
 // tourSchema.pre('save',function(next){
 //     console.log('hello world!');
 //     next()
@@ -117,19 +117,19 @@ tourSchema.pre('save',function(next)
 //query middleware
 
 // tourSchema.pre('find',function(next)
-tourSchema.pre(/^find/,function(next)
-{
-    this.find({secreteTour:{$ne:true}})
-    this.start=Date.now()
-    next()
-})
+// tourSchema.pre(/^find/,function(next)
+// {
+//     this.find({secreteTour:{$ne:true}})
+//     this.start=Date.now()
+//     next()
+// })
 
-tourSchema.post(/^find/,function(docs,next)
-{
-    console.log(`query time is ${Date.now()-this.start} milliSeconds`)
-   console.log(docs)
-    next()
-})
+// tourSchema.post(/^find/,function(docs,next)
+// {
+//     console.log(`query time is ${Date.now()-this.start} milliSeconds`)
+//    console.log(docs)
+//     next()
+// })
  module.exports=mongoose.model('tour',tourSchema);
  
 
